@@ -1,0 +1,7 @@
+git clone <alamat repo>
+cd <nama folder repo>
+git checkout -b michelle-readme
+# buat atau ubah file, lalu:
+git add .
+git commit -m "Tambah requirements.txt dan README"
+git push -u origin michelle-readme
