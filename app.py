@@ -494,14 +494,6 @@ def render_login():
                 else:
                     st.error(hasil)
 
-            st.divider()
-            if st.button("⚡ Masuk Cepat (Akun Demo)", width="stretch"):
-                ok, hasil = cek_login("demo", AKUN_TERDAFTAR["demo"]["pin"])
-                if ok:
-                    masuk_sebagai(hasil)
-                    st.rerun()
-                else:
-                    st.error(hasil)
             st.caption("Saldo dan riwayat tersimpan per akun.")
 
 
