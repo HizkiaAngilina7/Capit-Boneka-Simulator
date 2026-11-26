@@ -196,6 +196,7 @@ BATAS_RARITY = [("Common", 0.45), ("Rare", 0.75), ("Epic", 0.92), ("Legendary", 
 PITY_MAKS = 10            # hard pity: setelah 10 Common berturut-turut, putaran berikutnya pasti Rare+
 BONUS_PITY = 0.15         # soft pity: tiap Common berturut-turut menaikkan bobot Rare+ sebesar 15%
 COOLDOWN_LEGENDARY = 10   # setelah dapat Legendary, 10 putaran berikutnya peluang Legendary separuh
+MAKS_UNDO = 2            # batas undo per sesi login (reset saat login ulang / reset progres)
 
 AKUN_TERDAFTAR = {
     "pemain1": {"pin": "1234", "nama": "Pemain 1"},
@@ -212,7 +213,7 @@ _awal = {
     "riwayat": [],             # STACK: riwayat hasil (pop = undo)
     "koleksi": Counter(),      # COUNTER: jumlah tiap item
     "cache": {},               # DICTIONARY: cache hasil scrape & API
-    "pity": 0, "cooldown": 0, "saldo": 0, "total_masuk": 0,
+    "pity": 0, "cooldown": 0, "saldo": 0, "total_masuk": 0, "undo_dipakai": 0,
     "grafik_saldo": [], "penjelasan_ai": "", "hasil_terbaru": [],
 }
 for _k, _v in _awal.items():
@@ -348,7 +349,7 @@ def proses_antrean(katalog, biaya, mesin):
 
 def undo_terakhir():
     s = st.session_state
-    if not s.riwayat:
+    if not s.riwayat or s.undo_dipakai >= MAKS_UNDO:
         return
     terakhir = s.riwayat.pop()                                # STACK: pop
     s.saldo += terakhir["biaya"]
@@ -359,6 +360,7 @@ def undo_terakhir():
         s.grafik_saldo.pop()
     s.pity, s.cooldown = hitung_status(s.riwayat)             # pity & cooldown ikut kembali
     s.hasil_terbaru = []
+    s.undo_dipakai += 1
 
 
 def reset_progres(saldo):
@@ -370,6 +372,7 @@ def reset_progres(saldo):
     s.pity, s.cooldown = 0, 0
     s.saldo = saldo
     s.total_masuk = saldo
+    s.undo_dipakai = 0
     s.penjelasan_ai = ""
     s.hasil_terbaru = []
 
@@ -448,6 +451,7 @@ def masuk_sebagai(username):
     s.koleksi = Counter(h["nama"] for h in s.riwayat)
     s.pity, s.cooldown = hitung_status(s.riwayat)
     s.antrean = deque()
+    s.undo_dipakai = 0
     s.penjelasan_ai = ""
     s.hasil_terbaru = []
     s.user = {"username": username, "nama": rec.get("nama", username)}
@@ -760,7 +764,9 @@ with tab1:
         s.perayaan = "Legendary" if "Legendary" in rarity_dapat else ("Epic" if "Epic" in rarity_dapat else None)
         simpan_sesi()
         st.rerun()   # supaya angka di atas (saldo, putaran, pity) ikut ter-update
-    if colB.button("↩️ Undo putaran terakhir", width="stretch"):
+    sisa_undo = MAKS_UNDO - s.undo_dipakai
+    if colB.button(f"↩️ Undo putaran terakhir ({sisa_undo}/{MAKS_UNDO})", width="stretch",
+                   disabled=sisa_undo <= 0 or not s.riwayat):
         undo_terakhir()
         simpan_sesi()
         st.rerun()
