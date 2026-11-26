@@ -1,1 +1,0 @@
-# Capit-Boneka-Simulator

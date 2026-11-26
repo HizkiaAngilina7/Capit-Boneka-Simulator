@@ -1,0 +1,4 @@
+data_pengguna.json
+katalog_cache.json
+__pycache__/
+.env
